@@ -26,7 +26,7 @@ function DisplayHostAPDConfig(){
   } elseif( isset($_POST['StartHotspot']) ) {
     if (CSRFValidate()) {
       $status->addMessage('Attempting to start hotspot', 'info');
-      exec( 'sudo /etc/init.d/hostapd start', $return );
+      exec( "sudo systemctl stop wpa_supplicant; sudo su -c \"sed -e '/RASP_AP_CONFIG_START/,/RASP_AP_CONFIG_END/{ s/^#//; }' -i /etc/dhcpcd.conf\"; sudo ifdown wlan0; sudo /etc/init.d/hostapd start", $return );
       foreach( $return as $line ) {
         $status->addMessage($line, 'info');
       }
@@ -36,7 +36,7 @@ function DisplayHostAPDConfig(){
   } elseif( isset($_POST['StopHotspot']) ) {
     if (CSRFValidate()) {
       $status->addMessage('Attempting to stop hotspot', 'info');
-      exec( 'sudo /etc/init.d/hostapd stop', $return );
+      exec( "sudo /etc/init.d/hostapd stop; sudo su -c \"sed -e '/RASP_AP_CONFIG_START/,/RASP_AP_CONFIG_END/{ s/^/#/; }' -i /etc/dhcpcd.conf\"; sudo systemctl start wpa_supplicant; sudo ifup wlan0; sleep 1; sudo wpa_cli scan", $return );
       foreach( $return as $line ) {
         $status->addMessage($line, 'info');
       }

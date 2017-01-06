@@ -142,6 +142,9 @@ function patch_system_files() {
     sudo_add '/bin/cp /tmp/dhcpddata /etc/dnsmasq.conf'
     sudo_add '/sbin/shutdown -h now'
     sudo_add '/sbin/reboot'
+    sudo_add '/sbin/wpa_cli scan'
+    sudo_add '/bin/sed -e /RASP_AP_CONFIG_START/\,/RASP_AP_CONFIG_END/{ s/^/\#/; } -i /etc/dhcpcd.conf'
+    sudo_add '/bin/sed -e /RASP_AP_CONFIG_START/\,/RASP_AP_CONFIG_END/{ s/^\#//; } -i /etc/dhcpcd.conf'
 }
 
 function install_complete() {
