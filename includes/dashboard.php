@@ -8,8 +8,48 @@ function DisplayDashboard(){
 
   $status = new StatusMessages();
 
+  if( isset($_POST['StartHotspot']) ) {
+    if (CSRFValidate()) {
+      $status->addMessage('Attempting to start hotspot', 'info');
+      exec( "sudo systemctl stop wpa_supplicant; sudo su -c \"sed -e '/RASP_AP_CONFIG_START/,/RASP_AP_CONFIG_END/{ s/^#//; }' -i /etc/dhcpcd.conf\"; sudo ifdown wlan0; sudo /etc/init.d/hostapd start", $return2 );
+      foreach( $return2 as $line ) {
+        $status->addMessage($line, 'info');
+      }
+    } else {
+      error_log('CSRF violation');
+    }
+  } elseif( isset($_POST['StopHotspot']) ){
+    if (CSRFValidate()) {
+      $status->addMessage('Attempting to stop hotspot', 'info');
+      exec( "sudo /etc/init.d/hostapd stop; sudo su -c \"sed -e '/RASP_AP_CONFIG_START/,/RASP_AP_CONFIG_END/{ s/^/#/; }' -i /etc/dhcpcd.conf\"; sudo systemctl start wpa_supplicant; sudo ifup wlan0; sleep 1; sudo wpa_cli scan", $return2 );
+      foreach( $return2 as $line ) {
+        $status->addMessage($line, 'info');
+      }
+      sleep(2);
+    } else {
+      error_log('CSRF violation');
+    }
+  }
+
+  if( isset($_POST['ifdown_wlan0']) ) {
+    exec( 'ifconfig wlan0 | grep -i running | wc -l',$test );
+    if($test[0] == 1) {
+      exec( 'sudo ifdown wlan0',$return );
+    } else {
+      echo 'Interface already down';
+    }
+  } elseif( isset($_POST['ifup_wlan0']) ) {
+    exec( 'ifconfig wlan0 | grep -i running | wc -l',$test );
+    if($test[0] == 0) {
+      exec( 'sudo ifup wlan0',$return );
+    } else {
+      echo 'Interface already up';
+    }
+  }
+
   exec( 'ifconfig wlan0', $return );
   exec( 'iwconfig wlan0', $return );
+  exec( 'pidof hostapd | wc -l', $hostapdstatus);
 
   $strWlan0 = implode( " ", $return );
   $strWlan0 = preg_replace( '/\s\s+/', ' ', $strWlan0 );
@@ -44,28 +84,19 @@ function DisplayDashboard(){
   preg_match('/Frequency:(\d+.\d+ GHz)/i',$strWlan0,$result);
   $strFrequency = $result[1];
 
+  if ($hostapdstatus[0] == 0) {
+    $runningAsMessage = ", running as client.";
+  } else {
+    $runningAsMessage = ", running as hotspot.";
+  }
+
   if(strpos( $strWlan0, "UP" ) !== false && strpos( $strWlan0, "RUNNING" ) !== false ) {
-    $status->addMessage('Interface is up', 'success');
+    $status->addMessage('Interface is up'. $runningAsMessage, 'success');
     $wlan0up = true;
   } else {
     $status->addMessage('Interface is down', 'warning');
   }
 
-  if( isset($_POST['ifdown_wlan0']) ) {
-    exec( 'ifconfig wlan0 | grep -i running | wc -l',$test );
-    if($test[0] == 1) {
-      exec( 'sudo ifdown wlan0',$return );
-    } else {
-      echo 'Interface already down';
-    }
-  } elseif( isset($_POST['ifup_wlan0']) ) {
-    exec( 'ifconfig wlan0 | grep -i running | wc -l',$test );
-    if($test[0] == 0) {
-      exec( 'sudo ifup wlan0',$return );
-    } else {
-      echo 'Interface already up';
-    }
-  }
   ?>
   <div class="row">
       <div class="col-lg-12">
@@ -80,7 +111,7 @@ function DisplayDashboard(){
                       <h4>Interface Information</h4>
           <div class="info-item">Interface Name</div> wlan0</br>
           <div class="info-item">IP Address</div>     <?php echo $strIPAddress ?></br>
-          <div class="info-item">Subnet Mask</div>    <?php echo $strNetMask ?></br>
+          <div class="info<?php CSRFToken() ?>-item">Subnet Mask</div>    <?php echo $strNetMask ?></br>
           <div class="info-item">Mac Address</div>    <?php echo $strHWAddress ?></br></br>
 
                       <h4>Interface Statistics</h4>
@@ -120,9 +151,17 @@ function DisplayDashboard(){
                     <form action="?page=wlan0_info" method="POST">
                     <?php if ( !$wlan0up ) {
                       echo '<input type="submit" class="btn btn-success" value="Start wlan0" name="ifup_wlan0" />';
-                    } else {
-                echo '<input type="submit" class="btn btn-warning" value="Stop wlan0" name="ifdown_wlan0" />';
-              }
+                    }
+                    else {
+		    echo '<input type="submit" class="btn btn-warning" value="Stop wlan0" name="ifdown_wlan0" />&nbsp;';
+
+		    if($hostapdstatus[0] == 0) {
+		      echo '<input type="submit" class="btn btn-success" name="StartHotspot" value="Run As hotspot" />';
+		    } else {
+		      echo '<input type="submit" class="btn btn-success" name="StopHotspot" value="Run As Client" />';
+		    };
+		    }
+		    CSRFToken()
               ?>
               <input type="button" class="btn btn-outline btn-primary" value="Refresh" onclick="document.location.reload(true)" />
               </form>
@@ -134,7 +173,7 @@ function DisplayDashboard(){
             </div><!-- /.panel-default -->
         </div><!-- /.col-lg-12 -->
     </div><!-- /.row -->
-  <?php 
+  <?php
 }
 
 ?>
