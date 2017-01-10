@@ -55,6 +55,35 @@ function SelectorOptions($name, $options, $selected = null) {
 }
 
 /**
+ * Check if Hotspot action start or stop is requested and execute them, if possible.
+ * $status: Status message object
+ */
+function reactHotpsotStartStop($status) {
+  if( isset($_POST['StartHotspot']) ) {
+    if (CSRFValidate()) {
+      $status->addMessage('Attempting to start hotspot', 'info');
+      exec( "sudo systemctl stop wpa_supplicant; sudo sed -e '/RASP_AP_CONFIG_START/,/RASP_AP_CONFIG_END/{ s/^#//; }' -i /etc/dhcpcd.conf; sudo ifdown wlan0; systemctl restart dhcpcd; sudo /etc/init.d/hostapd start; ", $return2 );
+      foreach( $return2 as $line ) {
+        $status->addMessage($line, 'info');
+      }
+    } else {
+      error_log('CSRF violation');
+    }
+  } elseif( isset($_POST['StopHotspot']) ){
+    if (CSRFValidate()) {
+      $status->addMessage('Attempting to stop hotspot', 'info');
+      exec( "sudo /etc/init.d/hostapd stop; sudo sed -e '/RASP_AP_CONFIG_START/,/RASP_AP_CONFIG_END/{ s/^/#/; }' -i /etc/dhcpcd.conf; sudo systemctl start wpa_supplicant; sudo ifup wlan0; sleep 1; systemctl restart dhcpcd; wpa_cli scan", $return2 );
+      foreach( $return2 as $line ) {
+        $status->addMessage($line, 'info');
+      }
+      sleep(2);
+    } else {
+      error_log('CSRF violation');
+    }
+  }
+}
+
+/**
 *
 * @param string $input
 * @param string $string
@@ -164,8 +193,8 @@ function DisplayOpenVPNConfig() {
 	?>
 	<div class="row">
 	<div class="col-lg-12">
-    	<div class="panel panel-primary">           
-			<div class="panel-heading"><i class="fa fa-lock fa-fw"></i> Configure OpenVPN 
+    	<div class="panel panel-primary">
+			<div class="panel-heading"><i class="fa fa-lock fa-fw"></i> Configure OpenVPN
             </div>
         <!-- /.panel-heading -->
         <div class="panel-body">
@@ -180,7 +209,7 @@ function DisplayOpenVPNConfig() {
            	<div class="tab-content">
            		<p><?php echo $status; ?></p>
             	<div class="tab-pane fade in active" id="openvpnclient">
-            		
+
             		<h4>Client settings</h4>
 					<form role="form" action="?page=save_hostapd_conf" method="POST">
 
@@ -201,7 +230,7 @@ function DisplayOpenVPNConfig() {
             		<h4>Server settings</h4>
             		<div class="row">
 						<div class="form-group col-md-4">
-            			<label for="code">Port</label> 
+            			<label for="code">Port</label>
             			<input type="text" class="form-control" name="openvpn_port" value="<?php echo $arrServerConfig['port'] ?>" />
 						</div>
 					</div>
@@ -286,7 +315,7 @@ function DisplayTorProxyConfig(){
 	?>
 	<div class="row">
 	<div class="col-lg-12">
-    	<div class="panel panel-primary">           
+    	<div class="panel panel-primary">
 			<div class="panel-heading"><i class="fa fa-eye-slash fa-fw"></i> Configure TOR proxy
             </div>
         <!-- /.panel-heading -->
@@ -323,13 +352,13 @@ function DisplayTorProxyConfig(){
 							<label for="code">AutomapHostsOnResolve</label>
 							<input type="text" class="form-control" name="automaphostsonresolve" value="<?php echo $arrConfig['AutomapHostsOnResolve']; ?>" />
 						</div>
-					</div>	
+					</div>
 					<div class="row">
 						<div class="form-group col-md-4">
 							<label for="code">TransListenAddress</label>
 							<input type="text" class="form-control" name="translistenaddress" value="<?php echo $arrConfig['TransListenAddress']; ?>" />
 						</div>
-					</div>	
+					</div>
 					<div class="row">
 						<div class="form-group col-md-4">
 							<label for="code">DNSPort</label>
@@ -382,9 +411,9 @@ function DisplayTorProxyConfig(){
 						</div>
 					</div>
             	</div>
-		
+
 				<input type="submit" class="btn btn-outline btn-primary" name="SaveTORProxySettings" value="Save settings" />
-				<?php 
+				<?php
 				if( $torproxystatus[0] == 0 ) {
 					echo '<input type="submit" class="btn btn-success" name="StartTOR" value="Start TOR" />';
 				} else {
@@ -398,7 +427,7 @@ function DisplayTorProxyConfig(){
     </div><!-- /.panel-primary -->
 </div><!-- /.col-lg-12 -->
 </div><!-- /.row -->
-<?php 
+<?php
 }
 
 /**

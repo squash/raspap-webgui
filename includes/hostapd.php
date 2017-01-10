@@ -23,27 +23,9 @@ function DisplayHostAPDConfig(){
     } else {
       error_log('CSRF violation');
     }
-  } elseif( isset($_POST['StartHotspot']) ) {
-    if (CSRFValidate()) {
-      $status->addMessage('Attempting to start hotspot', 'info');
-      exec( "sudo systemctl stop wpa_supplicant; sudo su -c \"sed -e '/RASP_AP_CONFIG_START/,/RASP_AP_CONFIG_END/{ s/^#//; }' -i /etc/dhcpcd.conf\"; sudo ifdown wlan0; sudo /etc/init.d/hostapd start", $return );
-      foreach( $return as $line ) {
-        $status->addMessage($line, 'info');
-      }
-    } else {
-      error_log('CSRF violation');
-    }
-  } elseif( isset($_POST['StopHotspot']) ) {
-    if (CSRFValidate()) {
-      $status->addMessage('Attempting to stop hotspot', 'info');
-      exec( "sudo /etc/init.d/hostapd stop; sudo su -c \"sed -e '/RASP_AP_CONFIG_START/,/RASP_AP_CONFIG_END/{ s/^/#/; }' -i /etc/dhcpcd.conf\"; sudo systemctl start wpa_supplicant; sudo ifup wlan0; sleep 1; sudo wpa_cli scan", $return );
-      foreach( $return as $line ) {
-        $status->addMessage($line, 'info');
-      }
-    } else {
-      error_log('CSRF violation');
-    }
   }
+
+  reactHotpsotStartStop($status);
 
   exec( 'cat '. RASPI_HOSTAPD_CONFIG, $return );
   exec( 'pidof hostapd | wc -l', $hostapdstatus);
@@ -153,7 +135,7 @@ function DisplayHostAPDConfig(){
       <div class="panel-footer"> Information provided by hostapd</div>
     </div><!-- /.col-lg-12 -->
   </div><!-- /.row -->
-<?php 
+<?php
 }
 
 function SaveHostAPDConfig($wpa_array, $enc_types, $modes, $interfaces, $status) {

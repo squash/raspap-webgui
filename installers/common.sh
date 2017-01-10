@@ -2,7 +2,7 @@ raspap_dir="/etc/raspap"
 raspap_user="www-data"
 version=`cat /etc/debian_version`
 
-# Determine version and set default home location for lighttpd 
+# Determine version and set default home location for lighttpd
 if [ $version == "8.0" ]; then
     echo "Raspian verison is 8.0 Jessie"
     webroot_dir="/var/www/html"
@@ -142,14 +142,16 @@ function patch_system_files() {
     sudo_add '/bin/cp /tmp/dhcpddata /etc/dnsmasq.conf'
     sudo_add '/sbin/shutdown -h now'
     sudo_add '/sbin/reboot'
-    sudo_add '/sbin/wpa_cli scan'
+    sudo_add '/bin/systemctl start wpa_supplicant'
+    sudo_add '/bin/systemctl stop wpa_supplicant'
+    sudo_add '/bin/systemctl restart dhcpcd'
     sudo_add '/bin/sed -e /RASP_AP_CONFIG_START/\,/RASP_AP_CONFIG_END/{ s/^/\#/; } -i /etc/dhcpcd.conf'
     sudo_add '/bin/sed -e /RASP_AP_CONFIG_START/\,/RASP_AP_CONFIG_END/{ s/^\#//; } -i /etc/dhcpcd.conf'
 }
 
 function install_complete() {
     install_log "Installation completed!"
-    
+
     echo -n "The system needs to be rebooted as a final step. Reboot now? [y/N]: "
     read answer
     if [[ $answer != "y" ]]; then

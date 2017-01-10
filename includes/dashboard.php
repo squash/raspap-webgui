@@ -1,5 +1,6 @@
 <?php
 
+include_once( 'includes/functions.php' );
 /**
 *
 *
@@ -8,28 +9,7 @@ function DisplayDashboard(){
 
   $status = new StatusMessages();
 
-  if( isset($_POST['StartHotspot']) ) {
-    if (CSRFValidate()) {
-      $status->addMessage('Attempting to start hotspot', 'info');
-      exec( "sudo systemctl stop wpa_supplicant; sudo su -c \"sed -e '/RASP_AP_CONFIG_START/,/RASP_AP_CONFIG_END/{ s/^#//; }' -i /etc/dhcpcd.conf\"; sudo ifdown wlan0; sudo /etc/init.d/hostapd start", $return2 );
-      foreach( $return2 as $line ) {
-        $status->addMessage($line, 'info');
-      }
-    } else {
-      error_log('CSRF violation');
-    }
-  } elseif( isset($_POST['StopHotspot']) ){
-    if (CSRFValidate()) {
-      $status->addMessage('Attempting to stop hotspot', 'info');
-      exec( "sudo /etc/init.d/hostapd stop; sudo su -c \"sed -e '/RASP_AP_CONFIG_START/,/RASP_AP_CONFIG_END/{ s/^/#/; }' -i /etc/dhcpcd.conf\"; sudo systemctl start wpa_supplicant; sudo ifup wlan0; sleep 1; sudo wpa_cli scan", $return2 );
-      foreach( $return2 as $line ) {
-        $status->addMessage($line, 'info');
-      }
-      sleep(2);
-    } else {
-      error_log('CSRF violation');
-    }
-  }
+  reactHotpsotStartStop($status);
 
   if( isset($_POST['ifdown_wlan0']) ) {
     exec( 'ifconfig wlan0 | grep -i running | wc -l',$test );
