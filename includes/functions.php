@@ -123,6 +123,14 @@ function ConvertToChannel( $freq ) {
   if ($channel > 0 && $channel < 14) {
     return $channel;
   } else {
+<<<<<<< Updated upstream
+=======
+    $channel=($freq - 5000 )/5;
+  }
+  if ($channel > 0 && $channel < 196) {
+      return $channel;
+    } else {
+>>>>>>> Stashed changes
     return 'Invalid Channel';
   }
 }
