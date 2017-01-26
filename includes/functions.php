@@ -113,6 +113,21 @@ function ParseConfig( $arrConfig ) {
 	return $config;
 }
 
+
+/**
+* Convert signal strength in db to quality %
+* @param float $signal
+* @return $quality
+*/
+function ConvertToQuality($signal) {
+  $signal=min($signal, -50);
+  $signal=max($signal, -100);
+
+  $quality=200+($signal*2);
+  $quality=min(100, $quality);
+  $quality=max(1, $quality);
+  return ($quality);
+}
 /**
 *
 * @param string $freq

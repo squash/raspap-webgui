@@ -119,12 +119,15 @@ function DisplayWPAConfig(){
     if (array_key_exists($arrNetwork[4], $networks)) {
       $networks[$arrNetwork[4]]['visible'] = true;
       $networks[$arrNetwork[4]]['channel'] = ConvertToChannel($arrNetwork[1]);
+      $networks[$arrNetwork[4]]['quality'] = ConvertToQuality($arrNetwork[2]);
       // TODO What if the security has changed?
     } else {
       $networks[$arrNetwork[4]] = array(
         'configured' => false,
         'protocol' => ConvertToSecurity($arrNetwork[3]),
         'channel' => ConvertToChannel($arrNetwork[1]),
+        'quality'=> ConvertToQuality($arrNetwork[2]),
+
         'passphrase' => '',
         'visible' => true,
         'connected' => false
@@ -157,6 +160,7 @@ function DisplayWPAConfig(){
                 <th></th>
                 <th>SSID</th>
                 <th>Channel</th>
+		<th>Quality</th>
                 <th>Security</th>
                 <th>Passphrase</th>
                 <th></th>
@@ -178,8 +182,10 @@ function DisplayWPAConfig(){
                 </td>
               <?php if ($network['visible']) { ?>
                 <td><?php echo $network['channel'] ?></td>
+		<td><?php echo $network['quality'] ?></td>
               <?php } else { ?>
                 <td><span class="label label-warning">X</span></td>
+		<td>-</td>
               <?php } ?>
                 <td><input type="hidden" name="protocol<?php echo $index ?>" value="<?php echo $network['protocol'] ?>" /><?php echo $network['protocol'] ?></td>
               <?php if ($network['protocol'] === 'Open') { ?>
