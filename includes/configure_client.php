@@ -185,7 +185,7 @@ function DisplayWPAConfig(){
               <?php if ($network['protocol'] === 'Open') { ?>
                 <td><input type="hidden" name="passphrase<?php echo $index ?>" value="" />---</td>
               <?php } else { ?>
-                <td><input type="text" class="form-control" name="passphrase<?php echo $index ?>" value="<?php echo $network['passphrase'] ?>" onKeyUp="CheckPSK(this, 'update<?php echo $index?>')" />
+                <td><input type="password" class="form-control" name="passphrase<?php echo $index ?>" value="<?php echo $network['passphrase'] ?>" onKeyUp="CheckPSK(this, 'update<?php echo $index?>')" />
               <?php } ?>
                 <td>
                   <div class="btn-group btn-block">
