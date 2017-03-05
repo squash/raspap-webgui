@@ -4,6 +4,11 @@
 *
 *
 */
+function sort_by_quality($a, $b) {
+if ($a['quality']<$b['quality']) return true;
+return false;
+}
+
 function DisplayWPAConfig(){
   $status = new StatusMessages();
   $scanned_networks = array();
@@ -116,18 +121,18 @@ function DisplayWPAConfig(){
   // display output
   foreach( $scan_return as $network ) {
     $arrNetwork = preg_split("/[\t]+/",$network);
-    if (array_key_exists($arrNetwork[4], $networks)) {
-      $networks[$arrNetwork[4]]['visible'] = true;
-      $networks[$arrNetwork[4]]['channel'] = ConvertToChannel($arrNetwork[1]);
-      $networks[$arrNetwork[4]]['quality'] = ConvertToQuality($arrNetwork[2]);
+    if (array_key_exists($arrNetwork[0], $networks)) {
+      $networks[$arrNetwork[0]]['visible'] = true;
+      $networks[$arrNetwork[0]]['channel'] = ConvertToChannel($arrNetwork[1]);
+      $networks[$arrNetwork[0]]['quality'] = ConvertToQuality($arrNetwork[2]);
       // TODO What if the security has changed?
     } else {
-      $networks[$arrNetwork[4]] = array(
+      $networks[$arrNetwork[0]] = array(
         'configured' => false,
         'protocol' => ConvertToSecurity($arrNetwork[3]),
         'channel' => ConvertToChannel($arrNetwork[1]),
         'quality'=> ConvertToQuality($arrNetwork[2]),
-
+	'ssid'=> $arrNetwork[4], 
         'passphrase' => '',
         'visible' => true,
         'connected' => false
@@ -135,12 +140,13 @@ function DisplayWPAConfig(){
     }
   }
 
-  exec( 'iwconfig wlan0', $iwconfig_return );
+  exec( 'iwconfig wlan1', $iwconfig_return );
   foreach ($iwconfig_return as $line) {
     if (preg_match( '/ESSID:\"(.+)\"/i',$line,$iwconfig_ssid )) {
       $networks[$iwconfig_ssid[1]]['connected'] = true;
     }
   }
+usort($networks, sort_by_quality);
 ?>
 
   <div class="row">
@@ -158,6 +164,7 @@ function DisplayWPAConfig(){
             <table class="table table-responsive table-striped">
               <tr>
                 <th></th>
+		<th>MAC</th>
                 <th>SSID</th>
                 <th>Channel</th>
 		<th>Quality</th>
@@ -166,7 +173,8 @@ function DisplayWPAConfig(){
                 <th></th>
               </tr>
             <?php $index = 0; ?>
-            <?php foreach ($networks as $ssid => $network) { ?>
+            <?php foreach ($networks as $mac => $network) { ?>
+              <?php if (!$network['visible']) continue;  ?>
               <tr>
                 <td>
                 <?php if ($network['configured']) { ?>
@@ -176,9 +184,11 @@ function DisplayWPAConfig(){
                 <i class="fa fa-exchange fa-fw"></i>
                 <?php } ?>
                 </td>
+		<td><?php print $mac; ?>
+		</td>
                 <td>
-                  <input type="hidden" name="ssid<?php echo $index ?>" value="<?php echo $ssid ?>" />
-                  <?php echo $ssid ?>
+                  <input type="hidden" name="ssid<?php echo $index ?>" value="<?php echo $network['ssid'] ?>" />
+                  <?php echo substr($network['ssid'],0,32) ?>
                 </td>
               <?php if ($network['visible']) { ?>
                 <td><?php echo $network['channel'] ?></td>
