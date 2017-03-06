@@ -27,8 +27,8 @@ function DisplayDashboard(){
     }
   }
 
-  exec( 'ifconfig wlan0', $return );
-  exec( 'iwconfig wlan0', $return );
+  exec( 'ifconfig wlan1', $return );
+  exec( 'iwconfig wlan1', $return );
   exec( 'pidof hostapd | wc -l', $hostapdstatus);
 
   $strWlan0 = implode( " ", $return );
@@ -91,7 +91,7 @@ function DisplayDashboard(){
                       <h4>Interface Information</h4>
           <div class="info-item">Interface Name</div> wlan0</br>
           <div class="info-item">IP Address</div>     <?php echo $strIPAddress ?></br>
-          <div class="info<?php CSRFToken() ?>-item">Subnet Mask</div>    <?php echo $strNetMask ?></br>
+          <div class="info-item">Subnet Mask</div>    <?php echo $strNetMask ?></br>
           <div class="info-item">Mac Address</div>    <?php echo $strHWAddress ?></br></br>
 
                       <h4>Interface Statistics</h4>

@@ -123,6 +123,7 @@ function DisplayWPAConfig(){
     $arrNetwork = preg_split("/[\t]+/",$network);
     if (array_key_exists($arrNetwork[0], $networks)) {
       $networks[$arrNetwork[0]]['visible'] = true;
+      $networks[$arrNetwork[0]]['mac'] = $arrNetwork[0];
       $networks[$arrNetwork[0]]['channel'] = ConvertToChannel($arrNetwork[1]);
       $networks[$arrNetwork[0]]['quality'] = ConvertToQuality($arrNetwork[2]);
       // TODO What if the security has changed?
@@ -135,7 +136,9 @@ function DisplayWPAConfig(){
 	'ssid'=> $arrNetwork[4], 
         'passphrase' => '',
         'visible' => true,
-        'connected' => false
+        'connected' => false,
+        'mac' => $arrNetwork[0]
+
       );
     }
   }
@@ -184,7 +187,7 @@ usort($networks, sort_by_quality);
                 <i class="fa fa-exchange fa-fw"></i>
                 <?php } ?>
                 </td>
-		<td><?php print $mac; ?>
+		<td><?php print $network['mac']; ?>
 		</td>
                 <td>
                   <input type="hidden" name="ssid<?php echo $index ?>" value="<?php echo $network['ssid'] ?>" />
